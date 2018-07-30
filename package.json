@@ -1,0 +1,17 @@
+{
+  "name": "cordova-plugin-pdf-viewer-android",
+  "version": "1.0.0",
+  "description": "",
+  "cordova": {
+    "id": "cordova-plugin-pdf-viewer-android",
+    "platforms": [
+      "android"
+    ]
+  },
+  "keywords": [
+    "ecosystem:cordova",
+    "cordova-android"
+  ],
+  "author": "Flavien",
+  "license": "MIT"
+}
