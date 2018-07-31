@@ -17,22 +17,24 @@ public class PDFViewer extends CordovaPlugin {
     private Integer showButtons = 0;
     private String cancel = "";
     private String ok = "";
+    private String save = "";
 
     @Override
     public boolean execute(String action, JSONArray data, CallbackContext callbackContext) throws JSONException {
 
-      PUBLIC_CALLBACKS = callbackContext;
+        PUBLIC_CALLBACKS = callbackContext;
         String url = data.getString(0);
 
         if(data.length() > 1) {
-          JSONObject options =  data.getJSONObject(1);
-          showButtons = options.getInt("showButtons");
-          cancel = options.getString("cancel");
-          ok = options.getString("ok");
+            JSONObject options =  data.getJSONObject(1);
+            showButtons = options.getInt("showButtons");
+            cancel = options.getString("cancel");
+            ok = options.getString("ok");
+            save = options.getString("save");
         }
 
         if (action.equals("showPDF")) {
-        	showPDF(url);
+            showPDF(url);
         }
         else if(action.equals("close")) {
             close();
@@ -47,34 +49,35 @@ public class PDFViewer extends CordovaPlugin {
         // not implemented
     }
 
-  @Override
-  public void onActivityResult(int requestCode, int resultCode, Intent data) {
-    if(data != null) {
-      String action = data.getStringExtra("action");
-      if(action != null) {
-        if (action.equals("1")) {
-          PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, "1");
-          pluginResult.setKeepCallback(true);
-          PUBLIC_CALLBACKS.sendPluginResult(pluginResult);
-        } else if (action.equals("0")) {
-          PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, "0");
-          pluginResult.setKeepCallback(true);
-          PUBLIC_CALLBACKS.sendPluginResult(pluginResult);
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if(data != null) {
+            String action = data.getStringExtra("action");
+            if(action != null) {
+                if (action.equals("1")) {
+                    PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, "1");
+                    pluginResult.setKeepCallback(true);
+                    PUBLIC_CALLBACKS.sendPluginResult(pluginResult);
+                } else if (action.equals("0")) {
+                    PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, "0");
+                    pluginResult.setKeepCallback(true);
+                    PUBLIC_CALLBACKS.sendPluginResult(pluginResult);
+                }
+            }
         }
-      }
+
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
-    super.onActivityResult(requestCode, resultCode, data);
-  }
-
     private void showPDF(final String fileName) {
-      Context context=this.cordova.getActivity().getApplicationContext();
-      Intent intent=new Intent(context,PDFViewerActivity.class);
-      intent.putExtra("showButtons", showButtons);
-      intent.putExtra("filename", fileName);
-      intent.putExtra("cancel", cancel);
-      intent.putExtra("ok", ok);
+        Context context=this.cordova.getActivity().getApplicationContext();
+        Intent intent=new Intent(context,PDFViewerActivity.class);
+        intent.putExtra("showButtons", showButtons);
+        intent.putExtra("filename", fileName);
+        intent.putExtra("cancel", cancel);
+        intent.putExtra("ok", ok);
+        intent.putExtra("save", save);
 
-      this.cordova.startActivityForResult((CordovaPlugin) this, intent, 0);
+        this.cordova.startActivityForResult((CordovaPlugin) this, intent, 0);
     }
 }

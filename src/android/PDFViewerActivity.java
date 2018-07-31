@@ -2,20 +2,32 @@ package com.ingensnetworks.plugin;
 
 import android.app.ActionBar;
 import android.app.Activity;
-import android.os.Bundle;
+import android.app.DownloadManager;
 import android.content.Intent;
+import android.os.Bundle;
+import android.os.Environment;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.webkit.MimeTypeMap;
 import android.widget.Button;
 
 import com.github.barteksc.pdfviewer.PDFView;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URI;
+import java.util.UUID;
 
 public class PDFViewerActivity extends Activity {
 
   private String cancel = "Cancel";
+  private String save = "Save";
+  private File pdfFile = null;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -25,6 +37,7 @@ public class PDFViewerActivity extends Activity {
     Intent intent = getIntent();
     String name = intent.getStringExtra("filename");
     cancel = intent.getStringExtra("cancel");
+    save = intent.getStringExtra("save");
     String ok = intent.getStringExtra("ok");
     Integer showButtons = intent.getIntExtra("showButtons", 0);
 
@@ -32,23 +45,23 @@ public class PDFViewerActivity extends Activity {
     actionbar.setDisplayShowHomeEnabled(false);
     actionbar.setTitle("");
 
-    PDFView pdfView = (PDFView)findViewById(getResources().getIdentifier("pdfView", "id", getPackageName()));
-    File file = new File(name);
+    PDFView pdfView = (PDFView) findViewById(getResources().getIdentifier("pdfView", "id", getPackageName()));
+    pdfFile = new File(name);
 
-    if(file.exists()) {
+    if (pdfFile.exists()) {
       try {
-        pdfView.fromFile(file)
-          .defaultPage(0)
-          .enableAntialiasing(true)
-          .load();
+        pdfView.fromFile(pdfFile)
+                .defaultPage(0)
+                .enableAntialiasing(true)
+                .load();
       } catch (Exception ex) {
         int i = 0;
       }
     }
 
-    Button btnOK = (Button)findViewById(getResources().getIdentifier("btnok", "id", getPackageName()));
+    Button btnOK = (Button) findViewById(getResources().getIdentifier("btnok", "id", getPackageName()));
 
-    if(showButtons == 1 || showButtons == 2) {
+    if (showButtons == 1 || showButtons == 2) {
       btnOK.setOnClickListener(new View.OnClickListener() {
         @Override
         public void onClick(View v) {
@@ -78,6 +91,7 @@ public class PDFViewerActivity extends Activity {
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
     menu.add(0, 0, 0, cancel).setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+    menu.add(1, 1, 0, save).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
     return true;
   }
 
@@ -86,6 +100,9 @@ public class PDFViewerActivity extends Activity {
     switch (item.getItemId()) {
       case 0:
         onBackPressed();
+        return true;
+      case 1:
+        saveFile();
         return true;
     }
     return false;
@@ -97,5 +114,52 @@ public class PDFViewerActivity extends Activity {
     intent.putExtra("action", "0");
     setResult(Activity.RESULT_OK, intent);
     finish();
+  }
+
+  public void saveFile() {
+    File downloadFolder = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+    File newPdfFile = new File(downloadFolder, UUID.randomUUID() + "-" + pdfFile.getName());
+
+    try {
+      copy(pdfFile, newPdfFile);
+
+      DownloadManager downloadManager = (DownloadManager) this.getSystemService(DOWNLOAD_SERVICE);
+      String typeMime = getMimeType(newPdfFile);
+      if (downloadManager != null && typeMime != null) {
+        downloadManager.addCompletedDownload(newPdfFile.getName(), newPdfFile.getName(), true, typeMime, newPdfFile.getAbsolutePath(), newPdfFile.length(), true);
+      } else {
+        onBackPressed();
+      }
+    } catch (IOException exception) {
+      onBackPressed();
+    }
+  }
+
+
+  public static void copy(File src, File dst) throws IOException {
+    InputStream in = new FileInputStream(src);
+    try {
+      OutputStream out = new FileOutputStream(dst);
+      try {
+        // Transfer bytes from in to out
+        byte[] buf = new byte[1024];
+        int len;
+        while ((len = in.read(buf)) > 0) {
+          out.write(buf, 0, len);
+        }
+      } finally {
+        out.close();
+      }
+    } finally {
+      in.close();
+    }
+  }
+
+  private String getMimeType(File file) {
+    URI fileUri = file.toURI();
+    String fileExtension = MimeTypeMap.getFileExtensionFromUrl(fileUri
+            .toString());
+    return MimeTypeMap.getSingleton().getMimeTypeFromExtension(
+            fileExtension.toLowerCase());
   }
 }

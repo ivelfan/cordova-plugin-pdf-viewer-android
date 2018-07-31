@@ -19,7 +19,8 @@ var PDFViewer = {
         var defaultOptions = {
             showButtons: 0, //0: no buttons; 1: ok button, 2: ok and cancel button
             cancel: "Cancel",
-            ok: "OK"
+            ok: "OK",
+            save: "Save"
         };
 
         Object.keys(options).forEach(function (key) {
