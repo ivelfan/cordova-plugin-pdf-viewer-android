@@ -1,11 +1,16 @@
 package com.ingensnetworks.plugin;
 
+import android.Manifest;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.app.DownloadManager;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.v4.app.ActivityCompat;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -25,6 +30,7 @@ import java.util.UUID;
 
 public class PDFViewerActivity extends Activity {
 
+  private static final String TAG = "PDFViewerActivity";
   private String cancel = "Cancel";
   private String save = "Save";
   private File pdfFile = null;
@@ -120,18 +126,50 @@ public class PDFViewerActivity extends Activity {
     File downloadFolder = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
     File newPdfFile = new File(downloadFolder, UUID.randomUUID() + "-" + pdfFile.getName());
 
-    try {
-      copy(pdfFile, newPdfFile);
+    if (isStoragePermissionGranted()) {
+      try {
+        copy(pdfFile, newPdfFile);
 
-      DownloadManager downloadManager = (DownloadManager) this.getSystemService(DOWNLOAD_SERVICE);
-      String typeMime = getMimeType(newPdfFile);
-      if (downloadManager != null && typeMime != null) {
-        downloadManager.addCompletedDownload(newPdfFile.getName(), newPdfFile.getName(), true, typeMime, newPdfFile.getAbsolutePath(), newPdfFile.length(), true);
-      } else {
+        DownloadManager downloadManager = (DownloadManager) this.getSystemService(DOWNLOAD_SERVICE);
+        String typeMime = getMimeType(newPdfFile);
+        if (downloadManager != null && typeMime != null) {
+          downloadManager.addCompletedDownload(newPdfFile.getName(), newPdfFile.getName(), true, typeMime, newPdfFile.getAbsolutePath(), newPdfFile.length(), true);
+        } else {
+          onBackPressed();
+        }
+      } catch (IOException exception) {
         onBackPressed();
       }
-    } catch (IOException exception) {
-      onBackPressed();
+    }
+  }
+
+  public  boolean isStoragePermissionGranted() {
+    if (Build.VERSION.SDK_INT >= 23) {
+      if (checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+              == PackageManager.PERMISSION_GRANTED) {
+        Log.v(TAG,"Permission is granted");
+        return true;
+      } else {
+
+        Log.v(TAG,"Permission is revoked");
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+        return false;
+      }
+    }
+    else { //permission is automatically granted on sdk<23 upon installation
+      Log.v(TAG,"Permission is granted");
+      return true;
+    }
+  }
+
+  @Override
+  public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+    if(grantResults[0]== PackageManager.PERMISSION_GRANTED){
+      Log.v(TAG,"Permission: "+permissions[0]+ "was "+grantResults[0]);
+
+      saveFile();
     }
   }
 

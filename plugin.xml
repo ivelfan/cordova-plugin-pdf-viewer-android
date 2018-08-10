@@ -17,6 +17,7 @@
         <source-file src="src/android/PDFViewer.java" target-dir="src/com/ingensnetworks/plugin"/>
         <source-file src="src/android/PDFViewerActivity.java" target-dir="src/com/ingensnetworks/plugin"/>
         <source-file src="src/android/activity_pdfviewer.xml" target-dir="res/layout"/>
+        <framework src="com.android.support:support-v4:27+" />
         <framework src="com.github.barteksc:android-pdf-viewer:2.8.2" />
         <config-file target="AndroidManifest.xml" parent="/manifest/application">
             <activity android:name="com.ingensnetworks.plugin.PDFViewerActivity" android:screenOrientation="portrait" />
